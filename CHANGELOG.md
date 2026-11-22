@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.2
+
+- Sign-in and the console CSS now come from the shared packages `idlefree-auth` and `idlefree-ui` instead of a
+  copy carried here; behavior and the page are unchanged.
+
 ## 0.1.1
 
 - Reworked into a serverless Kali **command console**: a task is now a free-form shell command (run with `bash -lc`
