@@ -6,4 +6,4 @@ lambdakali.server is the Lambda (the web console and its API); lambdakali/image 
 cloudformer/infra/aws//modules/lambdakali deploys both from this package.
 """
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
