@@ -1,46 +1,51 @@
 # lambdakali
 
-**A Kali command-line console on a Lambda Function URL — scanners are CodeBuild instances you start and shut down
-like machines, ≈ $0 while none is on.** Part of [IdleFree](https://cloudformer.github.io/) · 中文：[README.zh.md](README.zh.md)
+**A serverless Kali command console on a Lambda Function URL — start a scanner (a CodeBuild instance), type shell
+commands, they run on it. ≈ $0 while no scanner is on.** Part of [IdleFree](https://cloudformer.github.io/) · 中文：[README.zh.md](README.zh.md)
 
-Start a scanner (an instance size and a duration), then add tasks: a tool, a target, and arguments. Any free
-scanner takes the next one; the console shows its output live and links the saved output when it finishes. Shut a
-scanner down when done; it also shuts down by itself when its time is up or after 15 minutes without a task. Only
-hosts on the allowlist can be targeted.
+Your own Kali box that costs nothing when off. Start a scanner (an instance size, an image tier, a duration), then
+type any shell command — it runs on the next free scanner and streams its output back. `/work` lasts the scanner's
+life, so commands build on each other (`aws s3 cp …`, then `keepass2john`, then `john`). The gate is sign-in; there
+is no target allowlist (a free shell cannot enforce one), so run only against what you may.
 
 | | |
 |---|---|
 | Web console + API | one Lambda behind a Function URL; sign-in with a password or Cloudflare Access |
-| Scanners | one CodeBuild build each, on a fresh Kali instance; take the queued tasks (S3) in order, one at a time |
-| Image | Kali rolling plus a chosen set of tools, and the scanner; in your ECR |
-| A task | a tool (installed in the image), a target (on the allowlist), and arguments with `{target}` |
-| Output | shown live, saved to S3 as `output.txt`, presigned download link |
-| Secrets | SSM SecureStrings, set outside Terraform; reach tools as environment variables, masked as `***` |
+| Scanners | one CodeBuild build each, on a fresh Kali instance; take the queued commands (S3) in order, one at a time |
+| Image tiers | `slim` (common tools, ~1 min to start) and `common` (~80% of the tools, 2–3 GB) — picked at Start, like the instance size; `full` is an opt-in build |
+| A task | one shell command, run with `bash -lc` in `/work` |
+| Output | streamed live, saved to S3 as `output.txt`, presigned download link |
+| Secrets | SSM SecureStrings, set outside Terraform; reach commands as environment variables, masked as `***` |
+| Permissions | the scanner's role is least-privilege; grant it more (e.g. read an S3 path) through `scanner_policy_statements` |
 | Idle cost | ≈ $0 while no scanner is on (CodeBuild bills per minute while one is) |
 
-## A task runs one tool, no shell
+## Example: test a KeePass vault's master password
 
-The scanner fills `{target}` into the arguments and runs the tool directly — no shell — so a target cannot start a
-second command. Arguments with shell characters (`;` `&` `|` `` ` `` `$` `>` `<` `\`) are refused, and the target
-must be a single host, `host:port` or URL on the allowlist.
+With `scanner_policy_statements` granting `s3:GetObject` on your vault path, start a `common` scanner and run:
 
 ```
-nmap    scanme.example.com     -sV -p 1-1000 {target}
-nikto   https://example.com/   -h {target}
-sslscan example.com:443        {target}
+aws s3 cp s3://my-vaults/keepass/x.kdbx .
+keepass2john x.kdbx > hash
+john hash
+```
+
+Anything not in the image installs on demand — it is a root shell with apt and network:
+
+```
+apt-get update && apt-get install -y hydra && hydra -h
 ```
 
 ## Deploy
 
-With the Terraform module — usage, variables, tools and outputs:
+With the Terraform module — usage, variables, image tiers and outputs:
 [cloudformer/infra/aws//modules/lambdakali](https://registry.terraform.io/modules/cloudformer/infra/aws/latest/submodules/lambdakali).
-Docker must be running where Terraform runs: it builds the Kali image and pushes it to ECR (it is large, so the
-first apply takes a while).
+Docker must be running where Terraform runs: it builds each image tier (arm64) and pushes it to ECR (the `common`
+tier is 2–3 GB, so the first apply takes a while).
 
 ## Run only what you may run
 
-Running these tools against a host you are not authorized to test may be illegal. The allowlist (`allowed_targets`)
-is checked before any task is queued; keep it to hosts you own or have written permission to test.
+This runs arbitrary commands on a machine with your AWS role, reachable (behind sign-in) over the internet. Use it
+on your own account, against hosts you own or have written permission to test. Keep sign-in on.
 
 ## License
 

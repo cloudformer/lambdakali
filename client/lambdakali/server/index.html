@@ -147,6 +147,14 @@ dialog .actions { flex-direction: row-reverse; justify-content: flex-start; marg
 .mode:has(input:checked) { border-color: var(--accent); background: var(--accent-bg); }
 .mode:has(input:focus-visible) { box-shadow: 0 0 0 3px var(--accent-bg); }
 .new-side .btn { justify-content: center; margin-top: 2px; }
+.prompt { display: flex; align-items: center; gap: 8px; background: var(--code-bg); border: 1px solid var(--line2); border-radius: 8px; padding: 6px 10px; }
+.prompt:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+.prompt .dollar { color: var(--code-ok); font: 14px var(--mono); }
+.prompt input { flex: 1; min-width: 0; background: none; border: none; outline: none; color: var(--code-text); font: 14px var(--mono); padding: 4px 0; }
+.prompt input::placeholder { color: var(--faint); }
+.prompt .btn { padding: 6px 16px; }
+.cmd-hint { margin-top: 8px; }
+.cmd-hint code { font: 12px var(--mono); background: var(--panel2); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
 .cmd { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
 .field.grow { flex: 1; min-width: 180px; }
 .field.grow input, .field.args input { width: 100%; }
@@ -195,6 +203,7 @@ dialog .actions { flex-direction: row-reverse; justify-content: flex-start; marg
       <span class="hint" id="scanners-sum"></span>
       <span class="spacer"></span>
       <label class="field"><span class="hint">Instance</span><select id="instance"></select></label>
+      <label class="field" id="image-field" hidden><span class="hint">Image</span><select id="image"></select></label>
       <label class="field"><span class="hint">For</span><select id="duration"></select></label>
       <button class="btn btn-primary" id="power-on">⏻ Start scanner</button>
     </div>
@@ -207,15 +216,12 @@ dialog .actions { flex-direction: row-reverse; justify-content: flex-start; marg
       <span class="hint" id="tasks-sum"></span>
     </div>
     <div id="tasks-body">
-      <div class="cmd">
-        <label class="field"><span class="hint">Tool</span><select id="tool"></select></label>
-        <label class="field grow"><span class="hint">Target</span><input id="target" placeholder="scanme.example.com or https://example.com/" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-        <button class="btn btn-primary" id="add">+ Add task</button>
+      <div class="prompt">
+        <span class="dollar">$</span>
+        <input id="command" class="mono" placeholder="nmap -sV scanme.example.com   ·   keepass2john x.kdbx &gt; hash   ·   john hash" autocomplete="off" autocapitalize="off" spellcheck="false">
+        <button class="btn btn-primary" id="add">Run</button>
       </div>
-      <label class="field args"><span class="hint">Arguments</span><input id="args" class="mono" placeholder="-sV -p 1-1000 {target}" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <div class="cmdline" id="preview"></div>
-      <div class="tool-hint hint" id="tool-hint"></div>
-      <div class="allowed" id="allowed"></div>
+      <div class="hint cmd-hint">A command runs on the next free scanner with <code>bash -lc</code> in <code>/work</code>, which lasts the scanner's life — so commands build on each other. ↑ / ↓ recalls earlier commands.</div>
     </div>
     <div class="rows" id="tasks"></div>
   </section>
@@ -369,7 +375,7 @@ function render(){
                          onclick: e => { e.stopPropagation(); extendScanner(s); }}),
                        h('button', {className: 'btn-danger', textContent: 'Shut down', onclick: e => { e.stopPropagation(); stopScanner(s); }})] : [];
     return row('scanner', s, [h('span', {className: 'id', textContent: short(s.id)}),
-      h('span', {className: 'what'}, (cfg.instances[s.compute_type] || s.compute_type || ''),
+      h('span', {className: 'what'}, `${cfg.instances[s.compute_type] || s.compute_type || ''}${s.image ? ' · ' + s.image : ''}`,
         h('span', {className: 'hint', textContent: `${on ? 'on' : 'was on'} ${took(s.started, s.ended)} · ${s.by || ''}`})),
       h('span', {className: 'left' + (soon ? ' soon' : ''), textContent: rest}),
       h('span', {className: 'badge ' + cls, textContent: label})], acts);
@@ -388,7 +394,7 @@ function render(){
     const cancel = cls === 'waiting' ? h('button', {className: 'btn-danger', textContent: 'Cancel',
       onclick: e => { e.stopPropagation(); cancelTask(t); }}) : null;
     return row('task', t, [h('span', {className: 'id', textContent: '#' + taskNo(t)}),
-      h('span', {className: 'what'}, `${t.tool} ${t.target}`, h('span', {className: 'hint', textContent: `${t.by}${where}`})),
+      h('span', {className: 'what mono'}, t.command, h('span', {className: 'hint', textContent: `${t.by}${where}`})),
       h('span', {className: 'left', textContent: t.claim && t.claim.started ? took(t.claim.started, t.claim.ended) : ''}),   // running: so far
       h('span', {className: 'badge ' + cls, textContent: label})], cancel ? [cancel] : []);
   }));
@@ -454,7 +460,7 @@ function renderConsole(want){
     const links = Object.entries(feed.reports).map(([name, url]) =>
       h('a', {href: url, target: '_blank', rel: 'noopener noreferrer', textContent: name}));
     const on = t && t.claim && t.claim.scanner;
-    head = [h('span', {className: 'name', textContent: t ? `Task #${taskNo(t)} · ${t.tool} ${t.target}` : 'Task'}),
+    head = [h('span', {className: 'name', textContent: t ? `Task #${taskNo(t)}` : 'Task'}),
             h('span', {className: 'badge ' + cls, textContent: label}),
             ...(on ? [h('a', {href: '#', textContent: `on scanner ${short(on)}`, title: 'Show that scanner\'s console',
                               onclick: e => { e.preventDefault(); picked = {kind: 'scanner', id: on}; feed = null; render(); pollConsole(); }})] : []),
@@ -481,8 +487,8 @@ async function poll(){
 $('#power-on').onclick = async () => {
   $('#power-on').disabled = true;
   try {
-    const s = await api('/api/scanners', {method: 'POST', body: JSON.stringify({compute_type: $('#instance').value, minutes: +$('#duration').value})});
-    note(`scanner ${short(s.id)} starting: ${cfg.instances[s.compute_type]}, for ${hours(+$('#duration').value)}`, true);
+    const s = await api('/api/scanners', {method: 'POST', body: JSON.stringify({compute_type: $('#instance').value, image: $('#image').value, minutes: +$('#duration').value})});
+    note(`scanner ${short(s.id)} starting: ${cfg.images[$('#image').value] || $('#image').value}, ${cfg.instances[s.compute_type]}, for ${hours(+$('#duration').value)}`, true);
     scanners.unshift(s); render();
   } catch(e) { note(e.message, false); render(); }
 };
@@ -505,25 +511,21 @@ async function cancelTask(t){
   catch(e) { note(e.message, false); }
 }
 
-function cmdline(){
-  const tool = $('#tool').value, target = $('#target').value.trim(), args = $('#args').value;
-  return `${tool} ${args.replace('{target}', target || '{target}')}`.trim();
-}
-function refreshPreview(){ $('#preview').textContent = $('#target').value.trim() || $('#args').value ? cmdline() : ''; }
-
-$('#add').onclick = async () => {
-  const tool = $('#tool').value, target = $('#target').value.trim(), args = $('#args').value.trim();
-  if (!target) return note('enter a target', false);
-  if (!args.includes('{target}')) return note('put {target} in the arguments where the target goes', false);
+const cmdHistory = []; let histAt = -1;
+async function addTask(){
+  const command = $('#command').value.trim();
+  if (!command) return;
   $('#add').disabled = true;
   try {
-    const t = await api('/api/tasks', {method: 'POST', body: JSON.stringify({tool, target, args})});
+    const t = await api('/api/tasks', {method: 'POST', body: JSON.stringify({command})});
     tasks.unshift(t); render();
-    note(`task #${taskNo(t)} added: ${t.tool} ${t.target}` + (scanners.some(s => s.status === RUNNING) ? '' : ' · start a scanner to run it'), true);
-    $('#target').value = ''; refreshPreview();
+    note(`task #${taskNo(t)} added` + (scanners.some(s => s.status === RUNNING) ? '' : ' · start a scanner to run it'), true);
+    cmdHistory.push(command); histAt = cmdHistory.length;
+    $('#command').value = '';
   } catch(e) { note(e.message, false); }
-  finally { $('#add').disabled = false; }
-};
+  finally { $('#add').disabled = false; $('#command').focus(); }
+}
+$('#add').onclick = addTask;
 
 $('#logout').onclick = () => { cred = ''; store.set('cred', null); note('signed out', true); };
 
@@ -531,16 +533,18 @@ async function start(){
   cfg = await api('/api/config');
   $('#instance').replaceChildren(...Object.entries(cfg.instances).map(([v, label]) => h('option', {value: v, textContent: label})));
   $('#instance').value = cfg.default_instance;
+  const images = Object.entries(cfg.images || {});
+  $('#image').replaceChildren(...images.map(([v, label]) => h('option', {value: v, textContent: label})));
+  $('#image').value = cfg.default_image || (images[0] && images[0][0]) || '';
+  $('#image-field').hidden = images.length < 2;
   $('#duration').replaceChildren(...cfg.durations.map(m => h('option', {value: m, textContent: hours(m)})));
   $('#duration').value = cfg.default_minutes;
-  $('#tool').replaceChildren(...Object.keys(cfg.tools).map(name => h('option', {value: name, textContent: name})));
-  const toolHint = () => { $('#tool-hint').textContent = cfg.tools[$('#tool').value] || ''; refreshPreview(); };
-  $('#tool').onchange = toolHint; toolHint();
-  $('#target').oninput = $('#args').oninput = refreshPreview;
-  $('#args').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#add').click(); } });
-  $('#target').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('#add').click(); } });
-  $('#allowed').replaceChildren(h('span', {className: 'hint', style: 'border:none;background:none;padding:0', textContent: 'allowed:'}),
-                                ...cfg.allowed_targets.map(t => h('span', {textContent: t})));
+  const cmd = $('#command');
+  cmd.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addTask(); }
+    else if (e.key === 'ArrowUp') { if (histAt > 0) { histAt--; cmd.value = cmdHistory[histAt]; e.preventDefault(); } }
+    else if (e.key === 'ArrowDown') { if (histAt < cmdHistory.length - 1) { histAt++; cmd.value = cmdHistory[histAt]; } else { histAt = cmdHistory.length; cmd.value = ''; } e.preventDefault(); }
+  });
   const me = await api('/api/me');
   $('#who').textContent = me.identity; $('#who-meta').hidden = false;
   poll();

@@ -1,0 +1,23 @@
+{
+  "region": "us-east-2",
+  "aws_profile": "frank-private",
+  "env": "dev",
+  "project_name": "lambdakali",
+
+  "function_url_auth": "NONE",
+  "http_auth": { "enabled": true, "username": "frank", "password": "CHANGE-ME-16-chars-min" },
+  "cloudflare_auth": { "enabled": false, "team": "myteam", "aud": "CHANGE-ME" },
+
+  "scanner_policy_statements": [],
+  "secrets": [],
+  "compute_type": "BUILD_GENERAL1_SMALL",
+  "image_variants": ["slim", "common"],
+  "default_image": "common",
+  "max_scanners": 2,
+  "idle_shutdown_minutes": 15,
+  "max_session_minutes": 480,
+  "report_retention_days": 30,
+  "log_retention_days": 14,
+  "architecture": "arm64",
+  "force_destroy": true
+}

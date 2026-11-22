@@ -1,9 +1,15 @@
 # Changelog
 
+## 0.1.1
+
+- Reworked into a serverless Kali **command console**: a task is now a free-form shell command (run with `bash -lc`
+  in `/work`, which lasts the scanner's life, so commands build on each other) instead of a fixed tool + target +
+  args. No target allowlist — the gate is sign-in; grant a command extra IAM via the module's
+  `scanner_policy_statements`.
+- Image tiers picked at Start, like the instance size: `slim` (common tools) and `common` (~80% of the tools) are
+  built and offered; `full` (kali-linux-headless) is an opt-in build. Anything else installs on demand with apt.
+  The image carries the AWS CLI and `john`/`keepass2john`.
+
 ## 0.1.0
 
-- First release: a web console on a Lambda Function URL starts and shuts down scanners (CodeBuild instances with a
-  Kali rolling image; a size and a duration each, +1h from the page, up to `max_scanners` at once) and adds tasks —
-  a tool (installed in the image), a target (on the allowlist), and arguments with `{target}` — to one queue. A free
-  scanner takes the next task (an S3 claim) and runs the tool with no shell, its output live and saved to S3. A
-  scanner shuts down by itself when its time is up or after `idle_shutdown_minutes` without a task.
+- First release (tool + target + arguments form); superseded by the 0.1.1 command console.

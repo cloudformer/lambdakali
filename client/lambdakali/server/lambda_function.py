@@ -31,8 +31,7 @@ Sign-in: two methods, each on or off; a request passes when any method that is o
     POST /api/scanners/<id>/extend      its lease + 1 hour, never past MAX_SESSION_MINUTES after its start
     POST /api/scanners/<id>/stop        switch it off
     GET  /api/tasks                     the latest tasks, newest first, each with its claim
-    POST /api/tasks                     {"tool", "target", "args"}: add a task; the tool must be installed (TOOLS),
-                                        the target on the allowlist (ALLOWED_TARGETS), and args hold {target}
+    POST /api/tasks                     {"command"}: add a task (a shell command the next free scanner runs)
     GET  /api/tasks/<id>[?since=ms]     one task: claim, output file (presigned link, 1 hour), its log lines from since
     POST /api/tasks/<id>/cancel         cancel a task no scanner has taken (409 once one has)
 
@@ -68,7 +67,6 @@ PASSWORD = os.environ.get("PASSWORD", "")
 CLOUDFLARE_AUTH = os.environ.get("CLOUDFLARE_AUTH", "0") == "1"
 CLOUDFLARE_TEAM = os.environ.get("CLOUDFLARE_TEAM", "")   # <team>.cloudflareaccess.com
 CLOUDFLARE_AUD = os.environ.get("CLOUDFLARE_AUD", "")     # the Access application's AUD tag
-ALLOWED_TARGETS = json.loads(os.environ.get("ALLOWED_TARGETS", "[]"))   # example.com, app.example.com:8443, *.example.com
 BUCKET = os.environ.get("BUCKET", "")
 PROJECT = os.environ.get("PROJECT", "")       # the CodeBuild project: the scanner
 LOG_GROUP = os.environ.get("LOG_GROUP", "")   # its CloudWatch log group
@@ -88,10 +86,10 @@ INSTANCES = {                                 # CodeBuild compute type -> what t
     "BUILD_GENERAL1_MEDIUM": "medium · 4 vCPU · 7 GB",
     "BUILD_GENERAL1_LARGE": "large · 8 vCPU · 15 GB",
 }
+IMAGES = json.loads(os.environ.get("IMAGES", "{}"))         # {variant: {"uri": <ecr image>, "label": ...}}: the built image tiers
+DEFAULT_IMAGE = os.environ.get("DEFAULT_IMAGE", "")         # the variant Start offers first
 RUNNING = "IN_PROGRESS"                       # CodeBuild's status of a build that is on
-TOOLS = json.loads(os.environ.get("TOOLS", "{}"))   # {tool name: one-line description}: the tools installed in the image
-BAD_ARGS = re.compile(r"[;&|`$><\n\r\\]|\$\(|\|\|")   # shell metacharacters refused in args (the scanner runs no shell anyway)
-MAX_ARGS = 400                                # characters in a task's args
+MAX_COMMAND = 4000                            # characters in a task's command
 LIST_LIMIT = 20                               # scanners shown in the list
 TASK_LIMIT = 50                               # tasks shown in the list
 LINK_SECONDS = 3600                           # a presigned report link stays valid this long
@@ -287,35 +285,6 @@ def lambda_handler(event, context):
 
 # ---------------- the project's API: scanners = builds of the CodeBuild project; tasks = one queue in S3 ----------------
 
-def _target(target):
-    """The target, unchanged, when its host is on the allowlist; BadRequest / Forbidden otherwise. A target is a
-    host, host:port or an http(s):// URL (what a tool is pointed at); the allowlist is checked by its host and,
-    when the entry pins one, its port.
-
-    An allowlist entry is a host (any port), host:port (that port only) or *.domain (its subdomains, any port)."""
-    if not isinstance(target, str) or not target.strip():
-        raise BadRequest("a target is a host, host:port or http(s):// URL")
-    target = target.strip()
-    if BAD_ARGS.search(target) or " " in target:
-        raise BadRequest(f"target {target!r}: a single host, host:port or URL, no spaces or shell characters")
-    parts = urllib.parse.urlsplit(target if "://" in target else "//" + target)
-    try:
-        host, port = (parts.hostname or "").lower(), parts.port
-    except ValueError:
-        raise BadRequest(f"target {target!r}: bad port") from None
-    if "://" in target and parts.scheme not in ("http", "https"):
-        raise BadRequest(f"target {target!r}: only http(s):// URLs, a host or host:port")
-    if not host or parts.username or parts.password:
-        raise BadRequest(f"target {target!r}: a host, host:port or http(s)://host[:port][/path], no user or password")
-    for entry in ALLOWED_TARGETS:
-        name, _, want = entry.partition(":")
-        if want and str(port or "") != want:
-            continue
-        if host == name or (name.startswith("*.") and host.endswith(name[1:])):
-            return target
-    raise Forbidden(f"{host} is not on the allowlist (allowed_targets: {', '.join(ALLOWED_TARGETS)})")
-
-
 def _scanner_id(scanner_id):
     if not SCANNER_ID.fullmatch(scanner_id):
         raise BadRequest(f"scanner id: a uuid, got {scanner_id!r}")
@@ -332,7 +301,7 @@ def _summary(build):
     env = {v["name"]: v["value"] for v in build.get("environment", {}).get("environmentVariables", [])}
     return {"id": build["id"].split(":", 1)[1], "status": build["buildStatus"], "phase": build.get("currentPhase"),
             "started": build.get("startTime"), "ended": build.get("endTime"), "by": env.get("STARTED_BY"),
-            "compute_type": build.get("environment", {}).get("computeType")}
+            "compute_type": build.get("environment", {}).get("computeType"), "image": env.get("IMAGE_VARIANT")}
 
 
 def _builds(ids):
@@ -402,7 +371,8 @@ def me(event):
 
 
 def config(event):
-    return {"allowed_targets": ALLOWED_TARGETS, "tools": TOOLS, "instances": INSTANCES, "default_instance": DEFAULT_INSTANCE,
+    return {"instances": INSTANCES, "default_instance": DEFAULT_INSTANCE,
+            "images": {k: v["label"] for k, v in IMAGES.items()}, "default_image": DEFAULT_IMAGE,
             "durations": DURATIONS, "default_minutes": DEFAULT_MINUTES, "extend_minutes": EXTEND_MINUTES,
             "max_session_minutes": MAX_SESSION_MINUTES, "max_scanners": MAX_SCANNERS,
             "idle_shutdown_minutes": IDLE_SHUTDOWN_MINUTES, "version": VERSION}
@@ -422,24 +392,29 @@ def list_scanners(event):
 def start_scanner(event):
     body = _body(event)
     compute_type, minutes = body.get("compute_type", DEFAULT_INSTANCE), body.get("minutes", DEFAULT_MINUTES)
+    image = body.get("image", DEFAULT_IMAGE)
     if compute_type not in INSTANCES:
         raise BadRequest(f"compute_type: one of {', '.join(INSTANCES)}, got {compute_type!r}")
     if minutes not in DURATIONS:
         raise BadRequest(f"minutes: one of {', '.join(map(str, DURATIONS))}, got {minutes!r}")
+    if image not in IMAGES:
+        raise BadRequest(f"image: one of {', '.join(IMAGES)}, got {image!r}")
     on = sum(b["buildStatus"] == RUNNING for b in _recent())
     if on >= MAX_SCANNERS:
         raise Busy(f"{on} scanner(s) on already, the most max_scanners allows: shut one down first")
     try:
-        build = codebuild.start_build(projectName=PROJECT, computeTypeOverride=compute_type, environmentVariablesOverride=[
-            {"name": "STARTED_BY", "value": event["identity"], "type": "PLAINTEXT"}])["build"]
+        build = codebuild.start_build(projectName=PROJECT, computeTypeOverride=compute_type, imageOverride=IMAGES[image]["uri"],
+            environmentVariablesOverride=[{"name": "STARTED_BY", "value": event["identity"], "type": "PLAINTEXT"},
+                                          {"name": "IMAGE_VARIANT", "value": image, "type": "PLAINTEXT"}])["build"]
     except codebuild.exceptions.AccountLimitExceededException:
         raise Busy("max_scanners scanners are on already: shut one down first") from None
     out = _summary(build)
     until = datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(minutes=minutes)
     _write_lease(out["id"], until, event["identity"])
     out["until"] = _iso(until)
-    print(json.dumps({"event": "scanner_started", "id": build["id"], "compute_type": compute_type, "until": out["until"],
-                      "by": event["identity"]}))
+    out["image"] = image
+    print(json.dumps({"event": "scanner_started", "id": build["id"], "compute_type": compute_type, "image": image,
+                      "until": out["until"], "by": event["identity"]}))
     return 201, out
 
 
@@ -502,25 +477,16 @@ def list_tasks(event):
 
 
 def add_task(event):
-    """Queue a task: the tool must be installed, the target on the allowlist, and args hold {target} and no shell
-    characters. Nothing is queued unless all three pass. Any scanner that is on takes it.
-
-    The scanner fills {target} in and runs [tool, *shlex.split(args)] with no shell, so the target cannot start a
-    second command; args are checked here too, so the stored command reads cleanly."""
-    body = _body(event)
-    tool, target, args = body.get("tool"), body.get("target"), body.get("args", "")
-    if tool not in TOOLS:
-        raise BadRequest(f"tool: one of {', '.join(TOOLS)}, got {tool!r}")
-    if not isinstance(args, str) or len(args) > MAX_ARGS:
-        raise BadRequest(f"args: a string of at most {MAX_ARGS} characters")
-    if BAD_ARGS.search(args):
-        raise BadRequest("args: no shell characters (; & | ` $ > < \\ or a newline) — one command, no chaining")
-    if "{target}" not in args:
-        raise BadRequest("args: put {target} where the target goes, e.g. -sV -p 1-1000 {target}")
-    checked = _target(target)   # Forbidden / BadRequest before anything is queued
+    """Queue a task: a shell command the next free scanner runs with `bash -lc` in /work. Only the length is checked —
+    this is a command console behind sign-in, not a sandbox."""
+    command = _body(event).get("command")
+    if not isinstance(command, str) or not command.strip():
+        raise BadRequest("command: a shell command to run")
+    command = command.strip()
+    if len(command) > MAX_COMMAND:
+        raise BadRequest(f"command: at most {MAX_COMMAND} characters")
     task = {"id": f"{time.time_ns():019d}-{os.urandom(2).hex()}",   # sorts in the order added
-            "tool": tool, "target": checked, "args": args, "by": event["identity"],
-            "added": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
+            "command": command, "by": event["identity"], "added": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())}
     s3.put_object(Bucket=BUCKET, Key=_task_key(task["id"]), Body=json.dumps(task).encode(), ContentType="application/json")
     print(json.dumps({"event": "task_added", **task}))
     return 201, dict(task, claim=None)

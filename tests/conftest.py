@@ -11,10 +11,10 @@ from botocore.exceptions import ClientError
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path[:0] = [os.path.join(ROOT, "client"), os.path.join(ROOT, "client", "lambdakali", "image")]
 os.environ.update(AWS_DEFAULT_REGION="us-east-2", HTTP_AUTH="1", USER_NAME="admin", PASSWORD="a-password-of-16+chars",
-                  ALLOWED_TARGETS=json.dumps(["example.com", "*.example.com", "app.example.org:8443", "*.example.net"]),
                   BUCKET="test-reports", PROJECT="test-scanner", LOG_GROUP="/aws/codebuild/test-scanner",
                   IDLE_SHUTDOWN_MINUTES="15", MAX_SESSION_MINUTES="480", MAX_SCANNERS="2", COMPUTE_TYPE="BUILD_GENERAL1_SMALL",
-                  TOOLS=json.dumps({"nmap": "port and service scan", "nikto": "web server scan", "whatweb": "fingerprint"}))
+                  IMAGES=json.dumps({"slim": {"uri": "repo:slim-arm64", "label": "slim"},
+                                     "common": {"uri": "repo:common-arm64", "label": "common"}}), DEFAULT_IMAGE="common")
 
 SCANNER_ID = "0b6f7c1e-1111-4222-8333-944455556666"
 STARTED = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)   # when the fake builds start
@@ -34,11 +34,11 @@ class FakeCodeBuild:
     def __init__(self, limit=2):
         self.builds, self.limit, self.started = {}, limit, []
 
-    def start_build(self, projectName, environmentVariablesOverride, computeTypeOverride="BUILD_GENERAL1_SMALL"):
+    def start_build(self, projectName, environmentVariablesOverride, computeTypeOverride="BUILD_GENERAL1_SMALL", imageOverride=None):
         if sum(b["buildStatus"] == "IN_PROGRESS" for b in self.builds.values()) >= self.limit:
             raise self.exceptions.AccountLimitExceededException("Cannot have more than N builds in queue")
         build_id = f"{projectName}:{SCANNER_ID if not self.builds else f'{len(self.builds):08x}-0000-4000-8000-000000000000'}"
-        self.started.append({"env": environmentVariablesOverride, "compute_type": computeTypeOverride})
+        self.started.append({"env": environmentVariablesOverride, "compute_type": computeTypeOverride, "image": imageOverride})
         self.builds[build_id] = {"id": build_id, "buildStatus": "IN_PROGRESS", "currentPhase": "PROVISIONING",
                                  "startTime": STARTED.strftime("%Y-%m-%dT%H:%M:%SZ"),
                                  "environment": {"environmentVariables": environmentVariablesOverride, "computeType": computeTypeOverride},

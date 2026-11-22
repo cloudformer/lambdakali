@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lambdakali"           # repo = pip = import name
-version = "0.1.0"
-description = "A Kali command-line console on a Lambda Function URL; scanners are CodeBuild instances you start and shut down like machines, ≈ $0 while none is on."
+version = "0.1.1"
+description = "A serverless Kali command console on a Lambda Function URL; scanners are CodeBuild instances you start and shut down like machines, ≈ $0 while none is on."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }

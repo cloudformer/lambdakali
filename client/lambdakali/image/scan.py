@@ -10,9 +10,9 @@ until its lease runs out or it has been idle for IDLE_SHUTDOWN_MINUTES; Shut dow
                                             moves it. Checked every LEASE_CHECK_SECONDS, a running tool included.
     s3://<BUCKET>/reports/<task id>/output.txt   the tool's full output
 
-A task is {tool, target, args}: the scanner fills {target} into args, then runs [tool, *shlex.split(args)] with NO
-shell, so the target cannot start a second command. The tool is one of those installed in the image (the Lambda
-checks it against the same list); a tool not on PATH ends the task in error.
+A task is one shell command line, run with `bash -lc` in /work. /work persists for the scanner's life, so commands
+build on each other (`aws s3 cp …`, `keepass2john x.kdbx > hash`, `john hash`). Grant what a command needs (e.g. read
+an S3 path) through the module's scanner_policy_statements; the role's credentials are available to the aws CLI.
 
 Environment (the CodeBuild project sets them; CodeBuild adds CODEBUILD_BUILD_ID = <project>:<scanner id>):
     BUCKET, IDLE_SHUTDOWN_MINUTES
@@ -27,7 +27,6 @@ result = pass (exit 0) | fail (any other exit) | error (the tool could not be ru
 import datetime
 import json
 import os
-import shlex
 import subprocess
 import sys
 import threading
@@ -142,15 +141,14 @@ class Scanner:
 
     # ---- one task: run one tool ----
     def run(self, task):
-        tid, started = task["id"], iso(now())
+        tid, started, command = task["id"], iso(now()), task["command"]
         say(f"::task {tid} start")
-        cmd = [task["tool"], *shlex.split(task["args"].replace("{target}", task["target"]))]
-        say(f"::run {tid} {self.masked(' '.join(cmd))}")
+        say(f"::run {tid} {self.masked(command)}")
         output, size = os.path.join(WORK, "output.txt"), 0
         result = "error"
         try:
             with open(output, "w", encoding="utf-8") as out:
-                self.proc = subprocess.Popen(cmd, cwd=WORK, env=dict(os.environ, **self.values),
+                self.proc = subprocess.Popen(["bash", "-lc", command], cwd=WORK, env=dict(os.environ, **self.values),
                                              stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace")
                 for line in self.proc.stdout:
                     line = self.masked(line.rstrip("\n"))
@@ -162,13 +160,10 @@ class Scanner:
             say(f"::done {tid} {code}")
             result = "pass" if code == 0 else "fail"
             self.s3.upload_file(output, self.bucket, f"reports/{tid}/output.txt", ExtraArgs={"ContentType": "text/plain; charset=utf-8"})
-        except FileNotFoundError:
-            say(f"::out {tid} {task['tool']}: not installed in this image")
         except Exception as e:  # noqa: BLE001 - reported in the log, the scanner keeps going
             say(f"::out {tid} {self.masked(f'{type(e).__name__}: {e}')}")
         say(f"::task {tid} end {result}")
-        claim = {"scanner": self.id, "started": started, "ended": iso(now()), "result": result,
-                 "tool": task["tool"], "target": task["target"]}
+        claim = {"scanner": self.id, "started": started, "ended": iso(now()), "result": result, "command": command}
         self.s3.put_object(Bucket=self.bucket, Key=f"claims/{tid}.json", Body=json.dumps(claim).encode(),
                            ContentType="application/json")
 
