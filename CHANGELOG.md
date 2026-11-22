@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.3
+
+- Docs: a console and an architecture diagram under `docs/` (SVG), embedded in the README and the PyPI page; one
+  source, referenced everywhere. No code change.
+
 ## 0.1.2
 
 - Sign-in and the console CSS now come from the shared packages `idlefree-auth` and `idlefree-ui` instead of a
