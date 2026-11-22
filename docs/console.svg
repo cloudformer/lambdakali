@@ -2,42 +2,42 @@
      font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
   <defs>
     <style>
-      .win   { fill: #FFFFFF; stroke: #E5E7EB; stroke-width: 1.4; }
-      .bar   { fill: #FFFFFF; }
-      .panel { fill: #FFFFFF; stroke: #E5E7EB; stroke-width: 1.2; }
-      .rowln { fill: #FFFFFF; stroke: #E5E7EB; stroke-width: 1; }
-      .brand { font-size: 17px; font-weight: 700; fill: #111827; }
-      .k     { font-size: 11px; fill: #6B7280; }
-      .chip  { fill: #F3F4F6; stroke: #E5E7EB; stroke-width: 1; }
-      .chipt { font: 12px ui-monospace, Menlo, monospace; fill: #374151; }
-      .fold  { font-size: 14px; font-weight: 600; fill: #111827; }
-      .hint  { font-size: 12px; fill: #6B7280; }
-      .mono  { font: 12px ui-monospace, Menlo, monospace; fill: #6B7280; }
-      .what  { font: 13px ui-monospace, Menlo, monospace; fill: #1F2937; }
+      .win   { fill: #0F1620; stroke: #26323B; stroke-width: 1.4; }
+      .bar   { fill: #0F1620; }
+      .panel { fill: #141C24; stroke: #26323B; stroke-width: 1.2; }
+      .rowln { fill: #141C24; stroke: #26323B; stroke-width: 1; }
+      .brand { font-size: 17px; font-weight: 700; fill: #E6ECF0; }
+      .k     { font-size: 11px; fill: #8A97A3; }
+      .chip  { fill: #1E2A32; stroke: #2B3843; stroke-width: 1; }
+      .chipt { font: 12px ui-monospace, Menlo, monospace; fill: #CBD5E1; }
+      .fold  { font-size: 14px; font-weight: 600; fill: #E6ECF0; }
+      .hint  { font-size: 12px; fill: #8A97A3; }
+      .mono  { font: 12px ui-monospace, Menlo, monospace; fill: #8A97A3; }
+      .what  { font: 13px ui-monospace, Menlo, monospace; fill: #E6ECF0; }
       .btn   { fill: #0A6E5C; }
       .btnt  { font-size: 12.5px; font-weight: 600; fill: #FFFFFF; }
-      .btno  { fill: #FFFFFF; stroke: #D1D5DB; stroke-width: 1; }
-      .btnot { font-size: 12px; fill: #374151; }
-      .sel   { fill: #FFFFFF; stroke: #D1D5DB; stroke-width: 1; }
-      .selt  { font-size: 12px; fill: #374151; }
+      .btno  { fill: #1B252C; stroke: #3A4752; stroke-width: 1; }
+      .btnot { font-size: 12px; fill: #CBD5E1; }
+      .sel   { fill: #1B252C; stroke: #3A4752; stroke-width: 1; }
+      .selt  { font-size: 12px; fill: #CBD5E1; }
       .badge { stroke-width: 1; }
-      .brun  { fill: #E0F0EC; stroke: #0A6E5C; } .brunt { font-size: 11.5px; font-weight: 600; fill: #0A6E5C; }
-      .bpass { fill: #FFFFFF; stroke: #15803D; } .bpasst { font-size: 11.5px; font-weight: 600; fill: #15803D; }
-      .bfail { fill: #FFFFFF; stroke: #B91C1C; } .bfailt { font-size: 11.5px; font-weight: 600; fill: #B91C1C; }
-      .code  { fill: #0F172A; }
+      .brun  { fill: #11302B; stroke: #4FD1B0; } .brunt { font-size: 11.5px; font-weight: 600; fill: #4FD1B0; }
+      .bpass { fill: #141C24; stroke: #4ADE80; } .bpasst { font-size: 11.5px; font-weight: 600; fill: #4ADE80; }
+      .bfail { fill: #141C24; stroke: #F0857A; } .bfailt { font-size: 11.5px; font-weight: 600; fill: #F0857A; }
+      .code  { fill: #0A0E13; }
       .cl    { font: 12px ui-monospace, Menlo, monospace; fill: #E2E8F0; }
       .cmark { font: 12px ui-monospace, Menlo, monospace; fill: #93C5FD; }
       .cok   { font: 12px ui-monospace, Menlo, monospace; fill: #6EE7B7; }
-      .status{ fill: #F9FAFB; stroke: #E5E7EB; stroke-width: 1; }
+      .status{ fill: #0F1620; stroke: #26323B; stroke-width: 1; }
     </style>
   </defs>
 
-  <rect width="1100" height="700" rx="14" fill="#F3F4F6"/>
+  <rect width="1100" height="700" rx="14" fill="#0A0F14"/>
   <rect x="16" y="14" width="1068" height="672" rx="12" class="win"/>
 
   <!-- top bar -->
   <rect x="17" y="15" width="1066" height="46" rx="12" class="bar"/>
-  <line x1="17" y1="61" x2="1083" y2="61" stroke="#E5E7EB" stroke-width="1.2"/>
+  <line x1="17" y1="61" x2="1083" y2="61" stroke="#26323B" stroke-width="1.2"/>
   <text x="40" y="44" class="brand">🐉 lambdakali</text>
   <text x="200" y="36" class="k">Endpoint</text>
   <rect x="200" y="41" width="210" height="14" rx="7" class="chip"/>
@@ -80,7 +80,7 @@
   <text x="128" y="210" class="hint">1 running · 0 waiting · 1 done</text>
   <!-- command prompt -->
   <rect x="52" y="222" width="880" height="30" rx="8" class="sel"/>
-  <text x="66" y="242" class="what" fill="#0A6E5C">$</text>
+  <text x="66" y="242" class="what" fill="#4FD1B0">$</text>
   <text x="82" y="242" class="what">keepass2john x.kdbx &gt; hash &amp;&amp; john hash</text>
   <rect x="944" y="222" width="100" height="30" rx="6" class="btn"/><text x="994" y="242" text-anchor="middle" class="btnt">▸ Run</text>
   <!-- task rows -->
@@ -89,7 +89,7 @@
   <text x="520" y="286" class="hint">admin · on c3d4</text>
   <rect x="872" y="274" width="68" height="20" rx="10" class="badge brun"/><text x="906" y="288" text-anchor="middle" class="brunt">running</text>
   <text x="956" y="286" class="mono">0 min</text>
-  <line x1="52" y1="298" x2="1048" y2="298" stroke="#EEF1F4" stroke-width="1"/>
+  <line x1="52" y1="298" x2="1048" y2="298" stroke="#1E2A32" stroke-width="1"/>
   <text x="68" y="320" class="mono">#1</text>
   <text x="104" y="320" class="what">aws s3 cp s3://my-vaults/keepass/x.kdbx .</text>
   <text x="520" y="320" class="hint">admin · on c3d4</text>
@@ -98,11 +98,11 @@
 
   <!-- console -->
   <rect x="40" y="348" width="1020" height="298" rx="10" class="panel"/>
-  <text x="58" y="374" class="what" fill="#111827" font-weight="600">Task #2</text>
+  <text x="58" y="374" class="what" fill="#E6ECF0" font-weight="600">Task #2</text>
   <rect x="150" y="362" width="68" height="18" rx="9" class="badge brun"/><text x="184" y="375" text-anchor="middle" class="brunt">running</text>
-  <text x="234" y="374" class="hint" fill="#0A6E5C">on scanner c3d4</text>
+  <text x="234" y="374" class="hint" fill="#4FD1B0">on scanner c3d4</text>
   <text x="360" y="374" class="hint">output:</text>
-  <text x="412" y="374" class="hint" fill="#0A6E5C">output.txt</text>
+  <text x="412" y="374" class="hint" fill="#4FD1B0">output.txt</text>
   <rect x="52" y="384" width="996" height="250" rx="8" class="code"/>
   <text x="66" y="406" class="cmark">$ keepass2john x.kdbx &gt; hash &amp;&amp; john hash</text>
   <text x="66" y="426" class="cl">Using default input encoding: UTF-8</text>
@@ -117,6 +117,6 @@
 
   <!-- status bar -->
   <rect x="17" y="654" width="1066" height="32" rx="12" class="status"/>
-  <text x="40" y="674" class="mono" fill="#0A6E5C">[11:08:33] scanner c3d4 starting: Small (2 vCPU), common, for 4 h</text>
-  <text x="1060" y="674" text-anchor="end" class="mono">lambdakali 0.1.2</text>
+  <text x="40" y="674" class="mono" fill="#4FD1B0">[11:08:33] scanner c3d4 starting: Small (2 vCPU), common, for 4 h</text>
+  <text x="1060" y="674" text-anchor="end" class="mono">lambdakali 0.1.3</text>
 </svg>
