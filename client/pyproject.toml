@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lambdakali"           # repo = pip = import name
+version = "0.1.0"
+description = "A Kali command-line console on a Lambda Function URL; scanners are CodeBuild instances you start and shut down like machines, ≈ $0 while none is on."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "Frank Zhang" }]
+keywords = ["serverless", "aws", "lambda", "codebuild", "kali", "security", "pentest", "nmap"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Topic :: Security",
+]
+dependencies = []  # standard library only (boto3 comes with the Lambda runtime)
+
+[project.urls]
+Homepage = "https://github.com/cloudformer/lambdakali"
+IdleFree = "https://cloudformer.github.io/"
+Repository = "https://github.com/cloudformer/lambdakali"
+Deploy = "https://registry.terraform.io/modules/cloudformer/infra/aws/latest/submodules/lambdakali"
+Changelog = "https://github.com/cloudformer/lambdakali/blob/main/CHANGELOG.md"
+Issues = "https://github.com/cloudformer/lambdakali/issues"
+
+[tool.setuptools]
+packages = ["lambdakali", "lambdakali.server"]   # lambdakali.server = the Lambda (handler lambdakali.server.lambda_function.lambda_handler)
+
+[tool.setuptools.package-data]
+"lambdakali" = ["image/Dockerfile", "image/scan.py"]   # the scan image's build context
+"lambdakali.server" = ["index.html"]                   # the web console
