@@ -1,0 +1,122 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 700" width="1100" height="700"
+     font-family="-apple-system, 'Segoe UI', Helvetica, Arial, sans-serif">
+  <defs>
+    <style>
+      .win   { fill: #FFFFFF; stroke: #E5E7EB; stroke-width: 1.4; }
+      .bar   { fill: #FFFFFF; }
+      .panel { fill: #FFFFFF; stroke: #E5E7EB; stroke-width: 1.2; }
+      .rowln { fill: #FFFFFF; stroke: #E5E7EB; stroke-width: 1; }
+      .brand { font-size: 17px; font-weight: 700; fill: #111827; }
+      .k     { font-size: 11px; fill: #6B7280; }
+      .chip  { fill: #F3F4F6; stroke: #E5E7EB; stroke-width: 1; }
+      .chipt { font: 12px ui-monospace, Menlo, monospace; fill: #374151; }
+      .fold  { font-size: 14px; font-weight: 600; fill: #111827; }
+      .hint  { font-size: 12px; fill: #6B7280; }
+      .mono  { font: 12px ui-monospace, Menlo, monospace; fill: #6B7280; }
+      .what  { font: 13px ui-monospace, Menlo, monospace; fill: #1F2937; }
+      .btn   { fill: #0A6E5C; }
+      .btnt  { font-size: 12.5px; font-weight: 600; fill: #FFFFFF; }
+      .btno  { fill: #FFFFFF; stroke: #D1D5DB; stroke-width: 1; }
+      .btnot { font-size: 12px; fill: #374151; }
+      .sel   { fill: #FFFFFF; stroke: #D1D5DB; stroke-width: 1; }
+      .selt  { font-size: 12px; fill: #374151; }
+      .badge { stroke-width: 1; }
+      .brun  { fill: #E0F0EC; stroke: #0A6E5C; } .brunt { font-size: 11.5px; font-weight: 600; fill: #0A6E5C; }
+      .bpass { fill: #FFFFFF; stroke: #15803D; } .bpasst { font-size: 11.5px; font-weight: 600; fill: #15803D; }
+      .bfail { fill: #FFFFFF; stroke: #B91C1C; } .bfailt { font-size: 11.5px; font-weight: 600; fill: #B91C1C; }
+      .code  { fill: #0F172A; }
+      .cl    { font: 12px ui-monospace, Menlo, monospace; fill: #E2E8F0; }
+      .cmark { font: 12px ui-monospace, Menlo, monospace; fill: #93C5FD; }
+      .cok   { font: 12px ui-monospace, Menlo, monospace; fill: #6EE7B7; }
+      .status{ fill: #F9FAFB; stroke: #E5E7EB; stroke-width: 1; }
+    </style>
+  </defs>
+
+  <rect width="1100" height="700" rx="14" fill="#F3F4F6"/>
+  <rect x="16" y="14" width="1068" height="672" rx="12" class="win"/>
+
+  <!-- top bar -->
+  <rect x="17" y="15" width="1066" height="46" rx="12" class="bar"/>
+  <line x1="17" y1="61" x2="1083" y2="61" stroke="#E5E7EB" stroke-width="1.2"/>
+  <text x="40" y="44" class="brand">🐉 lambdakali</text>
+  <text x="200" y="36" class="k">Endpoint</text>
+  <rect x="200" y="41" width="210" height="14" rx="7" class="chip"/>
+  <text x="208" y="52" class="chipt">lambdakali-...lambda-url.aws</text>
+  <text x="440" y="36" class="k">Signed in</text>
+  <rect x="440" y="41" width="60" height="14" rx="7" class="chip"/>
+  <text x="448" y="52" class="chipt">admin</text>
+  <rect x="990" y="30" width="78" height="22" rx="6" class="btno"/>
+  <text x="1029" y="45" text-anchor="middle" class="btnot">Sign out</text>
+
+  <!-- scanners panel -->
+  <rect x="40" y="78" width="1020" height="92" rx="10" class="panel"/>
+  <text x="58" y="104" class="fold">▾ Scanners</text>
+  <text x="150" y="104" class="hint">1 on · at most 2 · each shuts down after 15 min without a task</text>
+  <text x="560" y="104" class="hint">Instance</text>
+  <rect x="620" y="90" width="118" height="22" rx="6" class="sel"/>
+  <text x="630" y="105" class="selt">Small (2 vCPU) ▾</text>
+  <text x="748" y="104" class="hint">Image</text>
+  <rect x="790" y="90" width="92" height="22" rx="6" class="sel"/>
+  <text x="799" y="105" class="selt">common ▾</text>
+  <text x="892" y="104" class="hint">For</text>
+  <rect x="920" y="90" width="52" height="22" rx="6" class="sel"/>
+  <text x="928" y="105" class="selt">4 h ▾</text>
+  <rect x="984" y="88" width="60" height="26" rx="6" class="btn"/>
+  <text x="1014" y="105" text-anchor="middle" class="btnt">⏻ Start</text>
+  <!-- running scanner row -->
+  <rect x="52" y="124" width="996" height="36" rx="8" class="rowln"/>
+  <text x="68" y="146" class="mono">c3d4</text>
+  <text x="118" y="146" class="what">Small · common</text>
+  <text x="258" y="146" class="hint">on 5 min · admin</text>
+  <text x="636" y="146" class="mono">3 h 55 min left</text>
+  <rect x="748" y="131" width="92" height="22" rx="11" class="badge brun"/>
+  <text x="794" y="146" text-anchor="middle" class="brunt">running #2</text>
+  <rect x="852" y="131" width="44" height="22" rx="6" class="btno"/><text x="874" y="146" text-anchor="middle" class="btnot">+1 h</text>
+  <rect x="906" y="131" width="90" height="22" rx="6" class="btno"/><text x="951" y="146" text-anchor="middle" class="btnot">Shut down</text>
+
+  <!-- tasks panel -->
+  <rect x="40" y="184" width="1020" height="150" rx="10" class="panel"/>
+  <text x="58" y="210" class="fold">▾ Tasks</text>
+  <text x="128" y="210" class="hint">1 running · 0 waiting · 1 done</text>
+  <!-- command prompt -->
+  <rect x="52" y="222" width="880" height="30" rx="8" class="sel"/>
+  <text x="66" y="242" class="what" fill="#0A6E5C">$</text>
+  <text x="82" y="242" class="what">keepass2john x.kdbx &gt; hash &amp;&amp; john hash</text>
+  <rect x="944" y="222" width="100" height="30" rx="6" class="btn"/><text x="994" y="242" text-anchor="middle" class="btnt">▸ Run</text>
+  <!-- task rows -->
+  <text x="68" y="286" class="mono">#2</text>
+  <text x="104" y="286" class="what">keepass2john x.kdbx &gt; hash &amp;&amp; john hash</text>
+  <text x="520" y="286" class="hint">admin · on c3d4</text>
+  <rect x="872" y="274" width="68" height="20" rx="10" class="badge brun"/><text x="906" y="288" text-anchor="middle" class="brunt">running</text>
+  <text x="956" y="286" class="mono">0 min</text>
+  <line x1="52" y1="298" x2="1048" y2="298" stroke="#EEF1F4" stroke-width="1"/>
+  <text x="68" y="320" class="mono">#1</text>
+  <text x="104" y="320" class="what">aws s3 cp s3://my-vaults/keepass/x.kdbx .</text>
+  <text x="520" y="320" class="hint">admin · on c3d4</text>
+  <rect x="884" y="308" width="56" height="20" rx="10" class="badge bpass"/><text x="912" y="322" text-anchor="middle" class="bpasst">pass</text>
+  <text x="956" y="320" class="mono">3 s</text>
+
+  <!-- console -->
+  <rect x="40" y="348" width="1020" height="298" rx="10" class="panel"/>
+  <text x="58" y="374" class="what" fill="#111827" font-weight="600">Task #2</text>
+  <rect x="150" y="362" width="68" height="18" rx="9" class="badge brun"/><text x="184" y="375" text-anchor="middle" class="brunt">running</text>
+  <text x="234" y="374" class="hint" fill="#0A6E5C">on scanner c3d4</text>
+  <text x="360" y="374" class="hint">output:</text>
+  <text x="412" y="374" class="hint" fill="#0A6E5C">output.txt</text>
+  <rect x="52" y="384" width="996" height="250" rx="8" class="code"/>
+  <text x="66" y="406" class="cmark">$ keepass2john x.kdbx &gt; hash &amp;&amp; john hash</text>
+  <text x="66" y="426" class="cl">Using default input encoding: UTF-8</text>
+  <text x="66" y="446" class="cl">Loaded 1 password hash (KeePass [SHA256 AES 32/64])</text>
+  <text x="66" y="466" class="cl">Cost 1 (iteration count) is 60000 for all loaded hashes</text>
+  <text x="66" y="486" class="cl">Press 'q' or Ctrl-C to abort, almost any other key for status</text>
+  <text x="66" y="506" class="cok">correcthorse    (x)</text>
+  <text x="66" y="526" class="cl">1g 0:00:00:21 DONE · 0.04g/s · 100% complete</text>
+  <text x="66" y="546" class="cmark">── done (exit 0)</text>
+  <text x="66" y="566" class="cl">output.txt uploaded to S3</text>
+  <text x="66" y="586" class="cl">▌</text>
+
+  <!-- status bar -->
+  <rect x="17" y="654" width="1066" height="32" rx="12" class="status"/>
+  <text x="40" y="674" class="mono" fill="#0A6E5C">[11:08:33] scanner c3d4 starting: Small (2 vCPU), common, for 4 h</text>
+  <text x="1060" y="674" text-anchor="end" class="mono">lambdakali 0.1.2</text>
+</svg>

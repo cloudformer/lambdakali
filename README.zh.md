@@ -7,6 +7,8 @@
 运行并实时回传输出。`/work` 在扫描机存活期一直在，所以命令可以接力（`aws s3 cp …`，再 `keepass2john`，再 `john`）。
 闸门是登录；没有目标允许清单（自由 shell 无法强制），所以只对你有权测试的目标运行。
 
+![控制台](docs/console.svg)
+
 ![架构](docs/architecture.svg)
 
 | | |

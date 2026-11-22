@@ -8,6 +8,8 @@ type any shell command — it runs on the next free scanner and streams its outp
 life, so commands build on each other (`aws s3 cp …`, then `keepass2john`, then `john`). The gate is sign-in; there
 is no target allowlist (a free shell cannot enforce one), so run only against what you may.
 
+![the console](docs/console.svg)
+
 ![architecture](docs/architecture.svg)
 
 | | |
