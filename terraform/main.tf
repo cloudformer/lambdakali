@@ -22,7 +22,7 @@ module "lambdakali" {
   log_retention_days        = var.log_retention_days
   architecture              = var.architecture
   force_destroy             = var.force_destroy
-  # lambdakali_version      = "X.Y.Z"  # unset: the release the module ships with
+  lambdakali_version        = var.lambdakali_version   # set in the tfvars file; bump it per release, module untouched
 }
 
 output "console_url" {

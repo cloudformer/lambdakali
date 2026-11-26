@@ -118,3 +118,9 @@ variable "force_destroy" {
   type    = bool
   default = true
 }
+
+variable "lambdakali_version" {
+  description = "The lambdakali release to deploy from PyPI. Bump this per release during testing; the module is not touched."
+  type        = string
+  default     = "0.1.5"
+}
